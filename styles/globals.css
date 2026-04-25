@@ -1,0 +1,112 @@
+/* 원본 index.html 의 인라인 <style> 그대로 + 추가 보정 */
+
+body {
+  background-color: #f8f9fa; /* bg-light 와 동일 */
+}
+
+.qa-container {
+  margin-top: 30px;
+  margin-bottom: 50px;
+}
+
+.qa-item {
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.question {
+  background-color: white;
+  padding: 18px 30px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  border-radius: 8px;
+}
+
+.question.active {
+  background-color: #f9f9f9;
+}
+
+.icon {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size: 20px;
+  transition: transform 0.5s ease;
+}
+
+.icon.rotate {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.answer {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 30px;
+  font-size: 18px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+.answer.show {
+  max-height: 800px;
+  padding: 15px 30px;
+}
+
+.usage-guide {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.usage-guide h3 {
+  color: #007bff;
+  font-weight: bold;
+  font-size: 22px;
+  text-align: left;
+}
+
+.usage-guide ol {
+  font-size: 20px;
+  padding-left: 20px;
+}
+
+.usage-guide li {
+  margin-bottom: 10px;
+}
+
+/* 결과 SHAP 리스트 항목 페이드인 */
+.shap-item {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.shap-item.visible {
+  opacity: 1;
+}
+
+/* 모바일 대응 */
+@media (max-width: 600px) {
+  .question {
+    font-size: 17px;
+    padding: 16px 50px 16px 20px;
+  }
+  .answer {
+    font-size: 15px;
+    padding: 0 20px;
+  }
+  .answer.show {
+    padding: 12px 20px;
+  }
+  .usage-guide ol {
+    font-size: 16px;
+  }
+}
