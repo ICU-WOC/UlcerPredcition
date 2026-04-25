@@ -266,7 +266,7 @@ export default function Home() {
               fontWeight: 'bold',
             }}
           >
-            developed by. RN 정영록, RN 국서라
+            developed by. RN 김경란, RN 국서라
           </div>
         </div>
 
