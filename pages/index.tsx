@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 type Contribution = { feature: string; value: number; contribution: number };
 type ApiOk = { risk_score: number; raw_probability: number; features: Contribution[] };
@@ -52,39 +52,7 @@ const FAQS: { q: string; a: string }[] = [
   },
 ];
 
-/** 원본의 typeEffect 와 동일 — 글자 하나씩 출력 */
-function useTypewriter(text: string, speed = 80, key?: unknown): string {
-  const [out, setOut] = useState('');
-  useEffect(() => {
-    setOut('');
-    if (!text) return;
-    let i = 0;
-    const id = window.setInterval(() => {
-      i += 1;
-      setOut(text.slice(0, i));
-      if (i >= text.length) window.clearInterval(id);
-    }, speed);
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, speed, key]);
-  return out;
-}
-
 function ResultCard({ data }: { data: ApiOk }) {
-  const probText = useTypewriter(`${data.risk_score.toFixed(1)}%`, 80, data);
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  useEffect(() => {
-    setVisibleCount(0);
-    if (data.features.length === 0) return;
-    const timers = data.features.map((_, i) =>
-      window.setTimeout(() => setVisibleCount((c) => Math.max(c, i + 1)), 500 * (i + 1))
-    );
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [data]);
-
-  const isHigh = data.risk_score >= 50;
-
   return (
     <div className="mt-4 p-4 bg-white shadow rounded">
       <h4 className="text-black">
@@ -93,24 +61,13 @@ function ResultCard({ data }: { data: ApiOk }) {
         </span>
       </h4>
       <p style={{ textAlign: 'center', fontSize: 20 }}>
-        이 환자의 욕창 발생 위험도는{' '}
-        <strong style={{ color: isHigh ? '#dc3545' : '#0d6efd' }}>{probText}</strong> 입니다.
+        이 환자의 욕창 발생 위험도는 <strong>{data.risk_score.toFixed(1)}%</strong> 입니다.
       </p>
-      {isHigh && (
-        <p style={{ textAlign: 'center', color: '#dc3545', fontSize: 15, marginTop: -8 }}>
-          ⚠ 50점 이상 — 적극적 예방 중재 검토 권장
-        </p>
-      )}
       {data.features.length > 0 && (
         <ul style={{ textAlign: 'center', listStyle: 'none', padding: 0, marginTop: 16 }}>
-          {data.features.map((f, i) => (
-            <li
-              key={f.feature}
-              className={`shap-item ${i < visibleCount ? 'visible' : ''}`}
-              style={{ fontSize: 16, marginBottom: 6 }}
-            >
-              <strong>{f.feature}</strong>이 위험 증가에{' '}
-              <strong style={{ color: '#dc3545' }}>{f.contribution}%</strong> 기여하였습니다
+          {data.features.map((f) => (
+            <li key={f.feature} style={{ fontSize: 16, marginBottom: 6 }}>
+              <strong>{f.feature}</strong>이 위험 증가에 <strong>{f.contribution}%</strong> 기여하였습니다
             </li>
           ))}
         </ul>
