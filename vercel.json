@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/predict.py": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "api/chat.py": {
+      "maxDuration": 30,
+      "memory": 1024,
+      "includeFiles": "data/**"
+    }
+  }
+}
