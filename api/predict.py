@@ -3,7 +3,8 @@
 5변수(의식수준, 최저체온, 최고체온, 하지근력, 실금횟수)를 받아
 - raw 확률 (model 출력)
 - 표시용 위험도 점수 (0~10% raw -> 0~50% display, 10~23.5% -> 50~100%)
-- 변수별 위험 기여도 (NB 분석적 marginal contribution; shap 라이브러리 미사용)
+- 변수별 위험 기여도 (NB 분석적 marginal contribution을 표시 점수 단위로 변환;
+  '+X점' 형태로 표기하기 위함. NB는 additive라 marginal = 정확한 Shapley)
 를 반환한다.
 """
 
@@ -53,20 +54,23 @@ def display_score(p_raw):
 
 
 def feature_contributions(model, x):
-    """변수별 위험 기여도 (raw 확률 기준 marginal contribution).
+    """변수별 위험 기여도를 표시 점수(0~100) 단위로 반환.
 
-    각 변수 i 에 대해:
-        contrib_i = P(y=1|x) - P(y=1|x_i := mean)
-    NB 는 additive 모델이라 marginal 이 정확한 Shapley 값과 일치한다.
+    각 변수 i 에 대해 학습 평균으로 치환했을 때 표시 점수가 얼마나 떨어지는지를
+    계산한다 (display_score(p_full) - display_score(p_without)).
+    NB는 additive라 raw 확률 기준 marginal이 정확한 Shapley 값과 일치하며,
+    여기에 piecewise display_score를 한 번 더 적용해 사용자가 보는 점수와
+    같은 단위로 표시한다.
     """
     p_full = float(model.predict_proba(x)[0, 1])
+    score_full = display_score(p_full)
     scaler = model.pipeline.named_steps['scaler']
     contribs = np.zeros(x.shape[1])
     for i in range(x.shape[1]):
         x_neutral = x.copy()
         x_neutral[0, i] = scaler.mean_[i]  # 학습 평균으로 치환 -> 효과 제거
         p_without = float(model.predict_proba(x_neutral)[0, 1])
-        contribs[i] = p_full - p_without
+        contribs[i] = score_full - display_score(p_without)
     return contribs, p_full
 
 
@@ -83,7 +87,7 @@ def build_response(features):
     contribs, p_raw = feature_contributions(model, X)
 
     score = round(display_score(p_raw), 1)
-    # 일단 raw 기여도 (확률 point) 로 모은 뒤, 양수만 추리고 상대 백분위로 환산.
+    # 변수별 표시 점수 기여도 (이미 0~100 점수 단위)
     items = []
     for label, val, c in zip(LABELS, features, contribs):
         items.append({
@@ -98,18 +102,16 @@ def build_response(features):
     drop = '고체온' if low['_raw'] >= high['_raw'] else '저체온'
     items = [it for it in items if it['feature'] != drop]
 
-    # 음수(보호 요인) 제거 — 사용자에게는 위험을 끌어올린 변수만 보여줌
+    # 위험을 끌어올린 변수만 (양의 점수 기여도) 노출, 보호 요인은 표시 안 함
     positives = [it for it in items if it['_raw'] > 0]
-    total = sum(it['_raw'] for it in positives)
 
     out_features = []
-    if total > 0:
-        for it in sorted(positives, key=lambda x: x['_raw'], reverse=True):
-            out_features.append({
-                'feature': it['feature'],
-                'value': round(it['value'], 1),
-                'contribution': round(it['_raw'] / total * 100, 1),
-            })
+    for it in sorted(positives, key=lambda x: x['_raw'], reverse=True):
+        out_features.append({
+            'feature': it['feature'],
+            'value': round(it['value'], 1),
+            'contribution': round(it['_raw'], 1),
+        })
 
     return {
         'risk_score': score,

@@ -18,7 +18,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Q2. 각 변수의 기여도는 어떻게 계산되는 건가요?',
-    a: `머신러닝 모델의 의사결정을 해석하는 SHAP (SHapley Additive exPlanations) 값을 사용했습니다. 예측 결과에 영향을 준 요소들을 SHAP 값으로 점수화한 뒤, 위험을 끌어올리는 방향(양의 SHAP)으로 작용한 변수들 사이의 상대 비율(%)로 표시합니다. 따라서 표시된 % 의 합은 항상 100% 가 됩니다.`,
+    a: `각 변수가 욕창 위험도 점수(0~100점) 를 얼마나 끌어올렸는지 '점수 단위'로 표시합니다.
+
+구체적으로는 각 변수를 학습 데이터의 평균값으로 치환했을 때 위험도 점수가 얼마나 떨어지는지(marginal contribution)를 계산하며, Gaussian Naïve Bayes 모델 특성상 이 값은 정확한 Shapley 값과 일치합니다.
+
+위험을 끌어올린 변수만 '+X점' 형태로 표시되며, 위험을 낮춘 보호 요인은 표시되지 않습니다. 표시 점수는 piecewise 매핑(raw 0~10% → 0~50점, raw 10~23.5% → 50~100점)이라 각 변수의 기여 점수 합이 위험도 점수와 정확히 일치하지는 않으며, 변수 간 상대적 영향 비교 용도로 활용해 주세요.`,
   },
   {
     q: 'Q3. 이 프로그램은 얼마나 정확한가요?',
@@ -69,7 +73,7 @@ function ResultCard({ data }: { data: ApiOk }) {
         <ul style={{ textAlign: 'center', listStyle: 'none', padding: 0, marginTop: 16 }}>
           {data.features.map((f) => (
             <li key={f.feature} style={{ fontSize: 16, marginBottom: 6 }}>
-              <strong>{f.feature}</strong>이 위험 증가에 <strong>{f.contribution}%</strong> 기여하였습니다
+              <strong>{f.feature}</strong>이 위험도에 <strong>+{f.contribution}점</strong> 기여하였습니다
             </li>
           ))}
         </ul>
