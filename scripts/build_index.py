@@ -21,8 +21,19 @@ RAG_DIR = ROOT / "rag"
 OUT_PATH = ROOT / "data" / "embeddings.json"
 
 EMBED_MODEL = "text-embedding-3-small"
-MAX_CHARS = 1500
+DEFAULT_MAX_CHARS = 1500
 OVERLAP = 200
+
+# Per-source chunk size overrides:
+#   - Manuscript: smaller chunks → finer-grained matching for specific numbers/methods
+#   - faq.md: ~one Q/A pair per chunk for direct FAQ retrieval
+MAX_CHARS_BY_NAME = {
+    "Manuscript.docx": 1000,
+    "faq.md": 600,
+}
+
+# Files in rag/ that should be excluded from the index
+SKIP_FILES = {"_manuscript_extract.txt"}
 
 
 def read_docx(path: Path) -> str:
@@ -45,7 +56,7 @@ def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def chunk_text(text: str, source: str) -> list[dict]:
+def chunk_text(text: str, source: str, max_chars: int) -> list[dict]:
     paragraphs = re.split(r"\n\s*\n", text)
     chunks: list[dict] = []
     current = ""
@@ -60,15 +71,15 @@ def chunk_text(text: str, source: str) -> list[dict]:
         para = para.strip()
         if not para:
             continue
-        if len(para) > MAX_CHARS:
+        if len(para) > max_chars:
             flush()
-            step = MAX_CHARS - OVERLAP
+            step = max_chars - OVERLAP
             for i in range(0, len(para), step):
-                piece = para[i : i + MAX_CHARS]
+                piece = para[i : i + max_chars]
                 if piece.strip():
                     chunks.append({"source": source, "text": piece.strip()})
             continue
-        if len(current) + len(para) > MAX_CHARS and current:
+        if len(current) + len(para) > max_chars and current:
             chunks.append({"source": source, "text": current.strip()})
             tail = current[-OVERLAP:] if len(current) > OVERLAP else current
             current = tail + "\n\n" + para
@@ -81,6 +92,9 @@ def chunk_text(text: str, source: str) -> list[dict]:
 def load_documents() -> list[dict]:
     all_chunks: list[dict] = []
     for path in sorted(RAG_DIR.iterdir()):
+        if path.name in SKIP_FILES or path.name.startswith("_"):
+            print(f"  skip (excluded): {path.name}")
+            continue
         if path.suffix == ".docx":
             text = read_docx(path)
         elif path.suffix == ".ipynb":
@@ -90,8 +104,9 @@ def load_documents() -> list[dict]:
         else:
             print(f"  skip (unsupported): {path.name}")
             continue
-        chunks = chunk_text(text, path.name)
-        print(f"  {path.name}: {len(chunks)} chunks")
+        max_chars = MAX_CHARS_BY_NAME.get(path.name, DEFAULT_MAX_CHARS)
+        chunks = chunk_text(text, path.name, max_chars)
+        print(f"  {path.name}: {len(chunks)} chunks (max_chars={max_chars})")
         all_chunks.extend(chunks)
     return all_chunks
 

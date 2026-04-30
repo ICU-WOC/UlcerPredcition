@@ -40,3 +40,6 @@ venv/
 
 # Standalone chatbot project (separate repo, kept local as backup)
 아산병원챗봇/
+
+# RAG source documents (kept local — manuscript is unpublished)
+rag/
