@@ -88,7 +88,7 @@ export default function ChatWidget() {
       {!open && (
         <div className="chat-fab-wrap">
           <span className="chat-fab-label" aria-hidden="true">
-            여기를 눌러 상담하세요
+            무엇이든 물어보세요
           </span>
           <button
             aria-label="상담 챗봇 열기"
@@ -96,19 +96,7 @@ export default function ChatWidget() {
             className="chat-fab"
           >
             <span className="chat-fab-ring" aria-hidden="true" />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="34"
-              height="34"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <img src="/chatbot.png" alt="" className="chat-fab-icon" />
           </button>
         </div>
       )}
@@ -118,7 +106,6 @@ export default function ChatWidget() {
           <div className="chat-header">
             <div>
               <div className="chat-title">욕창 예측 모델 챗봇</div>
-              <div className="chat-subtitle">아산병원 RAG · GPT-4o</div>
             </div>
             <button
               aria-label="닫기"
